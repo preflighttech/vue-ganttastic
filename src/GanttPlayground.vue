@@ -8,6 +8,7 @@
     width="100%"
     bar-start="beginDate"
     bar-end="endDate"
+    push-on-overlap
     :date-format="format"
     @click-bar="onClickBar($event.bar, $event.e, $event.datetime)"
     @mousedown-bar="onMousedownBar($event.bar, $event.e, $event.datetime)"
@@ -31,7 +32,7 @@
 import { ref } from "vue"
 import type { GanttBarObject } from "./types.js"
 
-const chartStart = ref("21.03.2021 12:00")
+const chartStart = ref("21.12.2020 12:00")
 const chartEnd = ref("15.07.2021 12:00")
 const format = ref("DD.MM.YYYY HH:mm")
 
@@ -42,7 +43,7 @@ const bars1 = ref<GanttBarObject[]>([
     ganttBarConfig: {
       id: "8621987329",
       label: "I'm in a bundle",
-      bundle: "bundle2"
+      // bundle: "bundle2"
     }
   }
 ])
@@ -54,9 +55,21 @@ const bars2 = ref([
     ganttBarConfig: {
       id: "1592311887",
       label: "I'm in a bundle",
-      bundle: "bundle2",
+      // bundle: "bundle2",
       style: {
         background: "magenta"
+      }
+    }
+  },
+  {
+    beginDate: "10.04.2021 00:00",
+    endDate: "15.04.2021 00:00",
+    ganttBarConfig: {
+      id: "1001",
+      label: "1001",
+      hasHandles: true,
+      style: {
+        background: "#b74b52"
       }
     }
   },

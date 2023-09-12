@@ -14,6 +14,8 @@ export default function useBarDragManagement() {
 
   const movedBarsInDrag = new Map<GanttBarObject, { oldStart: string; oldEnd: string }>()
 
+  let barsOrder: Array<GanttBarObject>;
+
   const { toDayjs, format } = useDayjsHelper()
 
   const initDragOfBar = (bar: GanttBarObject, e: MouseEvent) => {
@@ -21,6 +23,16 @@ export default function useBarDragManagement() {
     emitBarEvent({ ...e, type: "dragstart" }, bar)
     initDrag(e)
     addBarToMovedBars(bar)
+    saveBarsOrder(bar)
+  }
+
+  const saveBarsOrder = (bar: GanttBarObject) => {
+    const allBarsInRow =
+      getChartRows().find((row) => row.includes(bar)) || [];
+
+    barsOrder = allBarsInRow.sort((a, b) => (
+      toDayjs(a[barStart.value]) - toDayjs(b[barStart.value])
+    ))
   }
 
   const initDragOfBundle = (mainBar: GanttBarObject, e: MouseEvent) => {
@@ -51,7 +63,7 @@ export default function useBarDragManagement() {
       return
     }
     let currentBar = ganttBar
-    let { overlapBar, overlapType } = getOverlapBarAndType(currentBar)
+    let { overlapBar, overlapType } = getOverlapBarAndTypeUsingSaved(currentBar)
     while (overlapBar) {
       addBarToMovedBars(overlapBar)
       const currentBarStart = toDayjs(currentBar[barStart.value])
@@ -86,8 +98,38 @@ export default function useBarDragManagement() {
         moveBundleOfPushedBarByMinutes(overlapBar, minuteDiff, overlapType)
       }
       currentBar = overlapBar
-      ;({ overlapBar, overlapType } = getOverlapBarAndType(overlapBar))
+      ;({ overlapBar, overlapType } = getOverlapBarAndTypeUsingSaved(overlapBar))
     }
+  }
+
+  const getOverlapBarAndTypeUsingSaved = (ganttBar: GanttBarObject) => {
+    if (!barsOrder) {
+      // Use normal logic with bundles
+      return getOverlapBarAndType(ganttBar);
+    }
+
+    let overlapType, overlapBar
+    const ganttBarStart = toDayjs(ganttBar[barStart.value])
+    const ganttBarEnd = toDayjs(ganttBar[barEnd.value])
+    const barIndex = barsOrder.indexOf(ganttBar)
+
+    overlapBar = barsOrder.slice(0, barIndex).reverse().find(otherBar => (
+      toDayjs(otherBar[barEnd.value]) > ganttBarStart
+    ))
+
+    if (overlapBar) {
+      return { overlapBar, overlapType: 'left' }
+    }
+
+    overlapBar = barsOrder.slice(barIndex + 1).find(otherBar => (
+      toDayjs(otherBar[barStart.value]) < ganttBarEnd
+    ))
+
+    if (overlapBar) {
+      return { overlapBar, overlapType: 'right' }
+    }
+
+    return false;
   }
 
   const getOverlapBarAndType = (ganttBar: GanttBarObject) => {
